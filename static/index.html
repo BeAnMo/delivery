@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet" href="css/uswds.css" />
+
+    <script src="js/vue.js"></script>
+    <script src="js/uswds.js"></script>
+
+  </head>
+  <body>
+
+    <main id="app">
+
+      <nav-menu>
+        <nav-list>
+          <nav-item v-for="page in pages" :page="page">
+            {{ page.name }}
+          </nav-item>
+        </nav-list>
+      </nav-menu>
+
+      <base-page>
+        <component :is="currentPage"></component>
+      </base-page>
+
+    </main>
+
+    <script src="js/app.js"></script>
+  </body>
+</html>
