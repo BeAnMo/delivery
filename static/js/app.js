@@ -57,14 +57,25 @@ var basePage = {
   `
 };
 
+function startTime(){
+	var now = new Date();
+	setInterval(startTime, 1000);
+}
 //-------- Home --------//
 var homePage = {
+	data: function(){
+		return { time: function(){
+				return setCurrentTimeDisplay(this.$root.currentTime);
+			}
+		};
+	},
   template: `
 		<section>
 			<p>Welcome to the home screen</p>
 			<button @click="toPage('shifts-page', startShift)" :disabled="isDisabled">
 				New Shift
 			</button>
+			<p>Time: {{ time() }}</p>
 		</section>
 	`,
 	methods: {
@@ -122,12 +133,12 @@ var optionsPage = {
 
 				<div v-if="hasFee">
 					<label for="fee">Base Fee</label>
-					<input type="number" id="fee" v-model="fee"
+					<input type="number" step="0.01" id="fee" v-model="fee"
 					       :placeholder="this.$root.fee.base" />
 					<label for="feeDecr">
 						Fee Decrease Per Delivery - 0 if none
 					</label>
-					<input type="number" id="feeDecr" v-model="feeDecr"
+					<input type="number" step="0.01" id="feeDecr" v-model="feeDecr"
 					       :placeholder="this.$root.fee.decrement" />
 				</div>
 				<input type="submit" value="Save Changes"
@@ -137,6 +148,12 @@ var optionsPage = {
 		`,
 
 		methods: {
+			toPage: function(page){
+				// navigates to a specified page
+				this.$root.currentPage = page;
+				// command is a component method
+				//command();
+			},
 			// Void -> Void
 			feeStatus: function(){
 				// toggles Delivery Fee button
@@ -162,6 +179,8 @@ var optionsPage = {
 					hasFee: this.hasFee
 				}
 				Event.$emit('click', { type: 'options', data: data });
+
+				this.toPage('home-page');
 			}
 		}
 };
@@ -171,11 +190,51 @@ var shiftsPage = {
   data: function(){
     return {
       table: [
-        { heading: 'Time', data: this.totalTime()},
+				/*
+        { heading: 'Time', data: this.totalTime() },
         { heading: 'Earnings', data: this.totalEarnings() },
         { heading: 'Wage', data: this.totalWage() },
         { heading: 'Tips', data: this.totalMoney('tips') },
         { heading: 'Fees', data: this.totalMoney('fees') },
+				*/
+				// this refers to { heading: ..., data: ....}
+				// and not to shiftsPage
+				// also this.$root is inacessible
+				// this is super fucking obnoxious
+				// refactor when you can properly abstract this
+				{ heading: 'Time', data:
+					function(){
+						var start = app.currentShift.time.start
+						var elapsed = elapsedTime(start, app.currentTime);
+						return elapsed;
+					}
+				},
+        { heading: 'Earnings', data:
+					function(){
+						var start = app.currentShift.time.start
+						var elapsed = elapsedTime(start, app.currentTime);
+						return setTotalOf(app.currentShift.runs, 'fees') +
+									 setTotalOf(app.currentShift.runs, 'tips') +
+									 (elapsed * app.wage);
+					}
+				},
+        { heading: 'Wage', data:
+					function(){
+						var start = app.currentShift.time.start
+						var elapsed = elapsedTime(start, app.currentTime);
+						return elapsed * app.wage;
+					}
+				},
+        { heading: 'Tips', data:
+					function(){
+						return setTotalOf(app.currentShift.runs, 'tips');
+					}
+				},
+        { heading: 'Fees', data:
+					function(a){
+						return setTotalOf(app.currentShift.runs, 'fees');
+					}
+				},
       ]
     };
   },
@@ -190,7 +249,7 @@ var shiftsPage = {
         <thead>Current Shift Information</thead>
         <tr v-for="item in table">
           <td>{{ item.heading }}</td>
-          <td>{{ item.data }}</td>
+          <td>{{ item.data() }}</td>
         </tr>
       </table>
       <button class="usa-button-secondary"
@@ -229,14 +288,11 @@ var shiftsPage = {
 		// when time/earnings/wage are reloaded, they come up NaN
 		// Void -> Number
 		totalTime: function(){
-			if(this.$root.isDisabled(this.$root.currentShift)){
-				return 0.0;
-			}
-			return elapsedTime(this.$root.currentShift.time.start, new Date());
+
 		},
 		// Void -> Number
 		totalWage: function(){
-			return this.totalTime() * this.$root.wage;
+			return adjustFloat(this.totalTime() * this.$root.wage, 3);
 		},
 		// Void -> Number
 		totalMoney: function(prop){
@@ -268,7 +324,10 @@ var runsPage = {
       paymentType: '',
       amount: '',
       fee: this.$root.fee.current,
-			time: elapsedTime(this.$root.currentRun.time.start, new Date())
+			time: function(){
+				return elapsedTime(this.$root.currentRun.time.start,
+								           this.$root.currentTime);
+			}
     };
   },
 
@@ -279,7 +338,7 @@ var runsPage = {
           <td>Deliveries</td>
           <td>{{ this.$root.currentRun.deliveries.length }}</td>
 					<td>Run Time</td>
-          <td>{{ time }}</td>
+          <td>{{ time() }}</td>
         </tr>
       </table>
       <form v-on:submit.prevent>
@@ -291,7 +350,7 @@ var runsPage = {
         <input type="radio" id="formCard"
                v-model="paymentType" value="card" />
         <label for="formCard">Card</label>
-        <input type="number" placeholder="Tip Amount"
+        <input type="number" step="0.01" placeholder="Tip Amount"
                v-model="amount" />
         <input type="submit" :disabled="isDisabled"
                @click="submitForm" />
@@ -434,8 +493,10 @@ var app = new Vue({
       current: 0.0,
       decrement: 0.0
     },
+
     currentShift: null,
     currentRun: null,
+		currentTime: new Date(),
 
     pages: [
       { page: 'home-page', name: 'Home', active: true },
@@ -466,7 +527,13 @@ var app = new Vue({
 		// Void -> Void
     feeDecrease: function(){
 			// decrease the fee for the currentRun
-      this.fee.current -= this.fee.decrement;
+			// you're killing me JS
+      //(this.fee.current -= this.fee.decrement).toFixed(2);
+			var newFee = this.fee.current - this.fee.decrement;
+  		newFee = (newFee).toString();
+  		var dot = newFee.indexOf('.');
+  		newFee = newFee.substring(0, dot + 2);
+  		return this.fee.current = parseFloat(newFee);
     },
 		// Object|null -> Boolean
 		isDisabled: function(current){
@@ -476,12 +543,23 @@ var app = new Vue({
 			} else {
 				return true;
 			}
-		}
+		},
+		setCurrentTime: function(){
+			this.currentTime = new Date();
+		},
   },
 
   computed: {
 
   },
+
+	mounted: function(){
+		this.interval = setInterval(this.setCurrentTime, 1000);
+	},
+
+	beforeDestroy: function(){
+		clearInterval(this.interval);
+	},
 
   created: function(){
     Event.$on('click', function(data){
@@ -493,7 +571,7 @@ var app = new Vue({
 				case 'options':
 					app.wage = received.wage;
 					app.fee.base = received.fee;
-					app.fee.amount = received.fee;
+					app.fee.current = received.fee;
 					app.fee.decrement = received.feeDecr;
 					app.fee.hasFee = received.hasFee
 					break;
@@ -548,6 +626,30 @@ function restoreShiftInfo(){
 	return restore;
 }
 
+// Date -> String
+function setCurrentTimeDisplay(now){
+	var hour = now.getHours();
+	var mins = now.getMinutes();
+	var secs = now.getSeconds();
+	if(hour < 10){ hour = '0' + hour; }
+	if(mins < 10){ mins = '0' + mins; }
+	if(secs < 10){ secs = '0' + secs; }
+	return hour + ':' + mins + ':' + secs;
+}
+
+// Number, Number -> Number
+function adjustFloat(n, place){
+	// returns a number n to (place - 1) decimal places
+	// because JS apparently can't handle floats precisely
+  n = (n).toString();
+  var dot = n.indexOf('.');
+  n = n.substring(0, dot + place);
+  return parseFloat(n);
+}
+
+
+/*-------------------------------------------------------*/
+/*-------- Local Storage --------------------------------*/
 window.addEventListener('unload', function(){
 	var saved = {
 		wage: app.wage,
@@ -565,7 +667,7 @@ window.addEventListener('unload', function(){
 	return storeShiftInfo(saved);
 });
 
-window.addEventListener('load', function(){
+window.addEventListener('', function(){
 	var loaded = restoreShiftInfo();
 	app.wage = loaded.wage;
 	app.fee.hasFee = loaded.fee.hasFee;
