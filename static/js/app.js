@@ -5,6 +5,20 @@
 - toPage function needs to be abstracted
 
 - use localstorage as temp way to test app in real world
+
+- login/create profile:
+  # welcome page should have sign in/sign up
+	# sign up asks for:
+	  + profile name
+		+ company name
+		+ email
+		+ password
+	# sign in asks for:
+	  + profile name
+		+ password
+	# both sign in/up send info to server
+	  + if valid, launches home page
+		+ else error page 
 -------------------------------------------------------*/
 
 /*-------------------------------------------------------*/
@@ -43,6 +57,18 @@ function Shift(wage){
 	this.wage = wage;
 	this.total = 0;
 	this.runs = [];
+}
+
+// String, String -> Profile
+function Profile(pName, cName){
+	this.shifts = [];
+	this.profileName = pName;
+	this.companyName = cName;
+	this.wage = 0.0;
+	this.fee = {
+		base: 0.0,
+		decrement: 0.0
+	};
 }
 
 
@@ -116,7 +142,7 @@ var optionsPage = {
 			wage: Number,
 			fee: Number,
 			feeDecr: Number,
-			hasFee: false
+			hasFee: this.$root.fee.hasFee
 		}
 	},
   template: `
@@ -173,9 +199,9 @@ var optionsPage = {
 			submitForm: function(){
 				// sets the profile's options
 				var data = {
-					wage: this.wage,
-					fee: this.fee,
-					feeDecr: this.feeDecr,
+					wage: checkTypeAndReplace(this.wage, 'function', this.$root.wage),
+					fee: checkTypeAndReplace(this.fee, 'function', this.$root.fee.base),
+					feeDecr: checkTypeAndReplace(this.feeDecr, 'function', this.$root.fee.decrement),
 					hasFee: this.hasFee
 				}
 				Event.$emit('click', { type: 'options', data: data });
@@ -197,11 +223,6 @@ var shiftsPage = {
         { heading: 'Tips', data: this.totalMoney('tips') },
         { heading: 'Fees', data: this.totalMoney('fees') },
 				*/
-				// this refers to { heading: ..., data: ....}
-				// and not to shiftsPage
-				// also this.$root is inacessible
-				// this is super fucking obnoxious
-				// refactor when you can properly abstract this
 				{ heading: 'Time', data:
 					function(){
 						var start = app.currentShift.time.start
@@ -596,7 +617,7 @@ function isNumber(n){
 }
 
 // Array-of-Objects, String -> Number
-function setTotalOf(arr, prop){
+function setTotalOf_original(arr, prop){
     // loops through an array and adds all numeric values associated
     // with the specified property in each object
     var total = 0;
@@ -606,6 +627,12 @@ function setTotalOf(arr, prop){
     });
 
     return total;
+}
+
+function setTotalOf(arr, prop){
+	return arr.reduce(function(base, current){
+		return base + current[prop];
+	}, 0);
 }
 
 // Date, Date -> Number
@@ -637,6 +664,7 @@ function setCurrentTimeDisplay(now){
 	return hour + ':' + mins + ':' + secs;
 }
 
+// !!! still getting excessive floats !!!
 // Number, Number -> Number
 function adjustFloat(n, place){
 	// returns a number n to (place - 1) decimal places
@@ -647,6 +675,15 @@ function adjustFloat(n, place){
   return parseFloat(n);
 }
 
+// Primitive, String, Primitive -> Primitive
+function checkTypeAndReplace(item, type, replacement){
+	// checks the item to determine its type
+	if(typeof(item) === type){
+		return replacement;
+	} else {
+		return item;
+	}
+}
 
 /*-------------------------------------------------------*/
 /*-------- Local Storage --------------------------------*/
