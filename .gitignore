@@ -1,1 +1,8 @@
+# node files
 node_modules
+
+# sqlite DB
+test.db
+
+# back up files
+*.bak
