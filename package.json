@@ -1,0 +1,29 @@
+{
+  "name": "delivery",
+  "version": "1.0.0",
+  "description": "first major version of the deliveryApp",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beanmo/delivery.git"
+  },
+  "author": "BAM",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/beanmo/delivery/issues"
+  },
+  "homepage": "https://github.com/beanmo/delivery#readme",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2",
+    "sqlite3": "^3.1.8"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0"
+  }
+}

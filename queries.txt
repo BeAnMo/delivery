@@ -1,0 +1,49 @@
+SQL queries
+
+Need to figure out how to deal with nesting tables
+ - have all nested tables (shift, run, delivery, weather, mileage)
+   reference the profile_id
+ - have nested tables just reference the next level up?
+   ex. (delivery only refs run, run only refs shift, etc...)
+
+// creating the profile table
+CREATE TABLE profile (
+    profile_id       INTEGER PRIMARY KEY
+    profile_name     TEXT
+    profile_company  TEXT
+    profile_wage     FLOAT
+    profile_fee      FLOAT
+    profile_rate     FLOAT
+    profile_locale   TEXT
+    // maybe not worry about calculated props?
+)
+
+CREATE TABLE shift (
+    shift_start           DATE/TEXT
+    shift_end             DATE/TEXT
+    // no calc props?
+    shift_delivery_hours  FLOAT
+    shift_hours           FLOAT
+    shift_profile         INTEGER
+    FOREIGN KEY(shift_profile) REFERENCES profile(profile_id)
+)
+
+CREATE TABLE run (
+    run_start   DATE/TEXT
+    run_end     DATE/TEXT
+    // no calc props?
+    run_shift   INTEGER
+    // foreign key reference parent shift or parent profile?
+    FOREIGN KEY(run_shift) REFERENCES shift(shift_profile)
+)
+
+CREATE TABLE delivery (
+    delivery_start      DATE/TEXT
+    delivery_end        DATE/TEXT
+    delivery_payment    TEXT
+    delivery_tip        FLOAT
+    delivery_fee        FLOAT
+    // mileage?
+    delivery_run        INTEGER
+    FOREIGN KEY(delivery_run) REFERENCES run(run_shift)
+)

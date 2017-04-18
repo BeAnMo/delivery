@@ -18,8 +18,36 @@
 		+ password
 	# both sign in/up send info to server
 	  + if valid, launches home page
-		+ else error page 
+		+ else error page
 -------------------------------------------------------*/
+
+
+/*-------------------------------------------------------*/
+/*------- Worker ----------------------------------------*/
+const courier = new Worker('js/data-worker.js');
+
+var messages = {
+	send: function(message, data){
+		if(arguments.length === 2){
+			courier.postMessage([message, data]);
+		} else {
+			courier.postMessage([message]);
+		}
+	}
+}
+
+courier.onmessage = function(e){
+	/* worker replies:
+		 e.data[0] = reply
+		 e.date[1] = data
+	*/
+	var reply = e.data[0];
+	var data = e.data[1];
+
+	switch(reply){
+
+	}
+}
 
 /*-------------------------------------------------------*/
 /*-------- Event Listener -------------------------------*/
@@ -83,10 +111,103 @@ var basePage = {
   `
 };
 
-function startTime(){
-	var now = new Date();
-	setInterval(startTime, 1000);
-}
+//-------- Sign In/Up --------//
+var loginPage = {
+	data: function(){
+			return {
+				signIn: false,
+				signUp: false,
+				user: '',
+				pass: '',
+				rePass: '',
+				email: ''
+			};
+	},
+	// should display header bar but not menu
+	// v-on:submit.prevent to prevent form submissions
+	template: `
+		<section>
+		<h1>Delivery App</h1>
+			<button @click="signIn = true" v-if="!signIn && !signUp">
+				Sign In
+			</button>
+
+			<button class="usa-button-outline" v-if="!signIn && !signUp"
+			        @click="signUp = true">Sign Up</button>
+
+			<div v-if="signIn">
+				<form v-on:submit.prevent>
+					<input type="text" v-model="user"
+							   placeholder="User Name"
+								 minlength="4" maxlength="8"
+								 required />
+					<input type="password" v-model="pass"
+			 				   placeholder="Password"
+								 minlength="8" maxlength="12"
+								 required />
+					<input type="submit" value="Sign In" />
+				</form>
+
+				<button class="usa-button-secondary"
+				        @click="signIn = false">Cancel</button>
+			</div>
+
+			<div v-if="signUp">
+				<form v-on:submit.prevent>
+					<input type="text" v-model="user"
+							   placeholder="User Name"
+								 minlength="4" maxlength="8"
+								 required />
+					<input type="password" v-model="pass"
+			 				   placeholder="Password"
+								 minlength="8" maxlength="12"
+								 required />
+				  <input type="password" v-model="rePass"
+			 				   placeholder="Retype Password"
+								 minlength="8" maxlength="12"
+								 required />
+				 <input type="email" v-model="email"
+			 				   placeholder="Email" required />
+					<input type="submit" value="Sign Up"
+					       @click="submitSignUp" />
+				</form>
+
+				<button class="usa-button-secondary"
+								@click="signUp = false">Cancel</button>
+			</div>
+		</section>
+	`,
+
+	methods: {
+    // String -> Void
+    toPage: function(page){
+      // navigates to specified page
+      this.$root.currentPage = page;
+			this.$root.signedIn = true;
+    },
+		submitSignUp: function(){
+			// 1. validate form - HTML5 does this basically?
+			// 2. submit to DB
+			if(this.pass === this.rePass
+				&& this.user !== '' && this.email !== ''){
+				var newUser = {
+					user: this.user,
+					pass: this.pass,
+					email: this.email
+				}
+				messages.send('signUp', newUser);
+				alert('A confimation email will be sent shortly');
+				this.signUp = false;
+			} else {
+				alert('Please fill out form');
+				this.pass = '';
+				this.rePass = '';
+			}
+
+		},
+  }
+};
+
 //-------- Home --------//
 var homePage = {
 	data: function(){
@@ -506,6 +627,7 @@ var app = new Vue({
   el: '#app',
 
   data: {
+		signedIn: false,
 		// profile data will be pulled from the DB
 		wage: 0.00,
     fee: {
@@ -526,7 +648,7 @@ var app = new Vue({
 			{ page: 'shifts-page', name: 'Shift', active: false },
       { page: 'runs-page', name: 'Current Run', active: false },
     ],
-    currentPage: 'home-page',
+    currentPage: 'login-page',
   },
 
   components: {
@@ -537,6 +659,7 @@ var app = new Vue({
     // base template
     'base-page': basePage,
     // pages
+		'login-page': loginPage,
     'home-page': homePage,
     'shifts-page': shiftsPage,
     'runs-page': runsPage,
@@ -683,6 +806,13 @@ function checkTypeAndReplace(item, type, replacement){
 	} else {
 		return item;
 	}
+}
+
+// Void -> Void
+function startTime(){
+	// updates current time every second
+	var now = new Date();
+	setInterval(startTime, 1000);
 }
 
 /*-------------------------------------------------------*/
