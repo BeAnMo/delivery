@@ -1,3 +1,6 @@
+/*
+- profile page is what will load once user logs in
+*/
 const express    = require('express'),
       bodyParser = require('body-parser');
       Profile    = require('../models/profile');

@@ -6,3 +6,7 @@ test.db
 
 # back up files
 *.bak
+
+# private files
+app-config.js
+emailer/config.js

@@ -103,6 +103,7 @@ function Profile(pName, cName){
 /*-------------------------------------------------------*/
 /*-------- Pages ----------------------------------------*/
 //-------- Base ---------/
+/*
 var basePage = {
   template: `
     <div class="usa-grid" id="page">
@@ -110,8 +111,9 @@ var basePage = {
     </div>
   `
 };
-
+*/
 //-------- Sign In/Up --------//
+/*
 var loginPage = {
 	data: function(){
 			return {
@@ -207,8 +209,10 @@ var loginPage = {
 		},
   }
 };
+*/
 
 //-------- Home --------//
+/*
 var homePage = {
 	data: function(){
 		return { time: function(){
@@ -248,13 +252,17 @@ var homePage = {
 		}
 	}
 };
+*/
 
 //-------- Totals --------//
+/*
 var totalsPage = {
   template: `<section><p>Totals page</p></section>`
 };
+*/
 
 //-------- Options --------//
+/*
 var optionsPage = {
 	data: function(){
 		return {
@@ -331,19 +339,15 @@ var optionsPage = {
 			}
 		}
 };
+*/
 
 //-------- Shifts --------//
+/*
 var shiftsPage = {
   data: function(){
     return {
       table: [
-				/*
-        { heading: 'Time', data: this.totalTime() },
-        { heading: 'Earnings', data: this.totalEarnings() },
-        { heading: 'Wage', data: this.totalWage() },
-        { heading: 'Tips', data: this.totalMoney('tips') },
-        { heading: 'Fees', data: this.totalMoney('fees') },
-				*/
+
 				{ heading: 'Time', data:
 					function(){
 						var start = app.currentShift.time.start
@@ -456,8 +460,10 @@ var shiftsPage = {
 		}
 	}
 };
+*/
 
 //-------- Runs --------//
+/*
 var runsPage = {
   // input type as number instead of text makes sure that
   // only numbers are inputted, but popup warns against float
@@ -563,6 +569,7 @@ var runsPage = {
     }
   }
 };
+*/
 
 /*-------------------------------------------------------*/
 /*-------- Side Menu ------------------------------------*/

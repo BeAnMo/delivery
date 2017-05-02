@@ -15,8 +15,9 @@ onmessage = function(e){
 
 	switch(command){
 		case 'signUp':
-			for(var key in data){ console.log(data[key])};
-			post(data, '/user/' + data.user);
+			//for(var key in data){ console.log(data[key])};
+			console.log('posted to /login/' + data.param);
+			post(data, '/login/' + data.param); // + data.user
 	}
 }
 
@@ -34,12 +35,11 @@ function post(data, destination){
 
 	req.addEventListener('load', function(event){
 		console.log('POST completed');
-
 	});
 
 	req.addEventListener('error', function(event){
 		console.log('POST failed');
 	});
 
-	req.send(data);
+	req.send(data.upload);
 }
